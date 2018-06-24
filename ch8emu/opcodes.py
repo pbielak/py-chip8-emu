@@ -3,8 +3,6 @@ Implementation of opcodes
 """
 import random
 
-from ch8emu import utils
-
 
 class OpcodeNotSupportedError(Exception):
     pass
@@ -46,6 +44,7 @@ def x0___(opcode, emulator):
         for idx in range(len(emulator.gfx)):
             emulator.gfx[idx] = 0
 
+        emulator.draw_flag = True
         emulator.pc += 2
 
     elif opcode == 0x00EE:
@@ -55,8 +54,12 @@ def x0___(opcode, emulator):
         emulator.sp -= 1
 
     else:
-        emulator.logger.log('SYS addr')
-        raise OpcodeNotSupportedError('Opcode 0x0nnn NOT SUPPORTED!')
+        nnn = opcode & 0x0FFF
+        if nnn == 0x000:
+            nnn = 0x200
+
+        emulator.logger.log('SYS %s' % format(nnn, '#05x'))
+        emulator.pc = nnn
 
 
 def x1nnn(opcode, emulator):
@@ -202,15 +205,25 @@ def xCxkk(opcode, emulator):
 
 
 def xDxyn(opcode, emulator):
-    x = (opcode & 0x0F00) >> 8
-    y = (opcode & 0x00F0) >> 4
+    x = emulator.V[(opcode & 0x0F00) >> 8]
+    y = emulator.V[(opcode & 0x00F0) >> 4]
     n = opcode & 0x000F
 
     emulator.logger.log('DRW V%s, V%s, %s' % (format(x, 'X'),
                                               format(y, 'X'),
                                               format(n, 'X')))
 
-    print('DRAW')
+    emulator.V[0xF] = 0
+    for yline in range(n):
+        pixel = emulator.memory[emulator.I + yline]
+        for xline in range(8):
+            if (pixel & (0x80 >> xline)) != 0:
+                if emulator.gfx[((y + yline) * 64) + x + xline] == 1:
+                    emulator.V[0xF] = 1
+
+                emulator.gfx[((y + yline) * 64) + x + xline] ^= 1
+
+    emulator.draw_flag = True
     emulator.pc += 2
 
 

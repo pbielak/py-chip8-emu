@@ -31,5 +31,18 @@ class InstructionLogger(object):
             print('Executing:', msg)
 
 
-def draw_gfx(gfx):
-    pass
+def draw_gfx(gfx, width, height, inplace=True):
+    print('-' * (2 * width + 2))
+
+    for y in range(height):
+        print('|', end='')
+
+        for x in range(width):
+            if gfx[y * width + x] == 0:
+                print('  ', end='')
+            else:
+                print('* ', end='')
+
+        print('|')
+
+    print('-' * (2 * width + 2))

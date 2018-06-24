@@ -21,17 +21,17 @@ def main():
 
             if emu.draw_flag:
                 emu.draw_flag = False
-                utils.draw_gfx(emu.gfx)
+                utils.draw_gfx(emu.gfx, 64, 32)
 
         except KeyboardInterrupt:
             print('Ctrl-C pressed!')
             break
         except (opcodes.UnknownOpcodeError,
                 opcodes.OpcodeNotSupportedError) as e:
-            print(e.message)
+            print(str(e))
             break
 
-        sleep(0.5)
+        sleep(1)
 
 
 if __name__ == '__main__':
