@@ -12,7 +12,9 @@ class Emulator(object):
     GFX_SIZE = 64 * 32
     KEYPAD_SIZE = 16
 
-    def __init__(self):
+    def __init__(self, logger):
+        self.logger = logger
+
         self.pc = None
         self.stack = None
 
@@ -28,7 +30,7 @@ class Emulator(object):
         self.gfx = None
         self.key = None
 
-        self.opcode = None
+        self.draw_flag = None
 
         self.reset()
 
@@ -50,7 +52,7 @@ class Emulator(object):
         self.delay_timer = 0
         self.sound_timer = 0
 
-        self.opcode = 0
+        self.draw_flag = False
 
     def _load_sprites(self):
         sprites_data = sprites.get_sprites()
@@ -66,9 +68,8 @@ class Emulator(object):
             self.memory[0x200 + idx] = rom_buffer[idx]
 
     def run_single_cycle(self):
-        self.opcode = self.memory[self.pc] << 8 | self.memory[self.pc + 1]
-
-        opcodes.execute_opcode(self.opcode, self)
+        opcode = self.memory[self.pc] << 8 | self.memory[self.pc + 1]
+        opcodes.execute_opcode(opcode, self)
 
         self._update_timers()
 

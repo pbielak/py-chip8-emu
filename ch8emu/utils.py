@@ -15,9 +15,21 @@ def print_memory(emulator, cells_per_row=16):
         print(format(emulator.memory[idx], '#04X').replace('X', 'x'), end=' ')
 
 
-LOG_INSTRUCTIONS = True
+class InstructionLogger(object):
+    """Assembly instruction logger"""
+    def __init__(self):
+        self.enabled = None
+
+    def enable(self):
+        self.enabled = True
+
+    def disable(self):
+        self.enabled = False
+
+    def log(self, msg):
+        if self.enabled:
+            print('Executing:', msg)
 
 
-def log_instruction(msg):
-    if LOG_INSTRUCTIONS:
-        print('Executing:', msg)
+def draw_gfx(gfx):
+    pass
