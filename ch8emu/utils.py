@@ -17,7 +17,8 @@ def print_memory(emulator, cells_per_row=16):
 
 class InstructionLogger(object):
     """Assembly instruction logger"""
-    def __init__(self):
+    def __init__(self, display=None):
+        self.display = display
         self.enabled = None
 
     def enable(self):
@@ -28,21 +29,15 @@ class InstructionLogger(object):
 
     def log(self, msg):
         if self.enabled:
-            print('Executing:', msg)
-
-
-def draw_gfx(gfx, width, height, inplace=True):
-    print('-' * (2 * width + 2))
-
-    for y in range(height):
-        print('|', end='')
-
-        for x in range(width):
-            if gfx[y * width + x] == 0:
-                print('  ', end='')
+            if not self.display:
+                print('Executing:', msg)
             else:
-                print('* ', end='')
+                self.display.add_instruction(msg)
 
-        print('|')
 
-    print('-' * (2 * width + 2))
+def draw_gfx(display, gfx, width, height):
+    for y in range(height):
+        for x in range(width):
+            ch = '*' if gfx[y * width + x] == 1 else ' '
+            display.draw_on_canvas(2 * x, y, ch)
+            display.draw_on_canvas(2 * x + 1, y, ' ')
