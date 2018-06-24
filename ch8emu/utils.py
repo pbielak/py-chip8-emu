@@ -13,3 +13,11 @@ def print_memory(emulator, cells_per_row=16):
             print(f'\n{idx_str}', end='')
 
         print(format(emulator.memory[idx], '#04X').replace('X', 'x'), end=' ')
+
+
+LOG_INSTRUCTIONS = True
+
+
+def log_instruction(msg):
+    if LOG_INSTRUCTIONS:
+        print('Executing:', msg)

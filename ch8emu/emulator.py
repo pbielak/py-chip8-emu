@@ -68,7 +68,7 @@ class Emulator(object):
     def run_single_cycle(self):
         self.opcode = self.memory[self.pc] << 8 | self.memory[self.pc + 1]
 
-        opcodes.excute_opcode(self.opcode, self)
+        opcodes.execute_opcode(self.opcode, self)
 
         self._update_timers()
 
