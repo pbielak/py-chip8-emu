@@ -2,3 +2,5 @@ roms/
 .idea
 __pycache__
 *venv
+*.pyc
+

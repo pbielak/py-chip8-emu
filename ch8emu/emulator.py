@@ -58,7 +58,7 @@ class Emulator(object):
         sprites_data = sprites.get_sprites()
 
         for idx in range(len(sprites_data)):
-            self.memory[0x050 + idx] = sprites_data[idx]
+            self.memory[idx] = sprites_data[idx]
 
     def load_rom(self, filename):
         with open(filename, 'rb') as f:

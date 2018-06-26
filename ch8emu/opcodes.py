@@ -50,28 +50,28 @@ def x0___(opcode, emulator):
     elif opcode == 0x00EE:
         emulator.logger.log('RET')
 
-        emulator.pc = emulator.stack[emulator.sp]
         emulator.sp -= 1
+        emulator.pc = emulator.stack[emulator.sp]
+        emulator.pc += 2
 
     else:
         nnn = opcode & 0x0FFF
-        if nnn == 0x000:
-            nnn = 0x200
-
         emulator.logger.log('SYS %s' % format(nnn, '#05x'))
         emulator.pc = nnn
 
 
 def x1nnn(opcode, emulator):
-    emulator.logger.log('JP addr')
-    emulator.pc = opcode & 0x0FFF
+    addr = opcode & 0x0FFF
+    emulator.logger.log('JP %s' % format(addr, '#05x'))
+    emulator.pc = addr
 
 
 def x2nnn(opcode, emulator):
-    emulator.logger.log('CALL addr')
+    addr = opcode & 0x0FFF
+    emulator.logger.log('CALL %s' % format(addr, '#05x'))
     emulator.stack[emulator.sp] = emulator.pc
     emulator.sp += 1
-    emulator.pc = opcode & 0x0FFF
+    emulator.pc = addr
 
 
 def x3xkk(opcode, emulator):
@@ -205,23 +205,25 @@ def xCxkk(opcode, emulator):
 
 
 def xDxyn(opcode, emulator):
-    x = emulator.V[(opcode & 0x0F00) >> 8]
-    y = emulator.V[(opcode & 0x00F0) >> 4]
+    x = (opcode & 0x0F00) >> 8
+    y = (opcode & 0x00F0) >> 4
     n = opcode & 0x000F
 
     emulator.logger.log('DRW V%s, V%s, %s' % (format(x, 'X'),
                                               format(y, 'X'),
                                               format(n, 'X')))
-
+    x_val = emulator.V[x]
+    y_val = emulator.V[y]
     emulator.V[0xF] = 0
+
     for yline in range(n):
         pixel = emulator.memory[emulator.I + yline]
         for xline in range(8):
             if (pixel & (0x80 >> xline)) != 0:
-                if emulator.gfx[((y + yline) * 64) + x + xline] == 1:
+                if emulator.gfx[((y_val + yline) * 64) + x_val + xline] == 1:
                     emulator.V[0xF] = 1
 
-                emulator.gfx[((y + yline) * 64) + x + xline] ^= 1
+                emulator.gfx[((y_val + yline) * 64) + x_val + xline] ^= 1
 
     emulator.draw_flag = True
     emulator.pc += 2
@@ -234,17 +236,19 @@ def xEx__(opcode, emulator):
     if op == 0x9E:
         emulator.logger.log('SKP V%s' % (format(x, 'X')))
         if emulator.key[emulator.V[x]] == 1:
+            emulator.pc += 4
+        else:
             emulator.pc += 2
 
     elif op == 0xA1:
         emulator.logger.log('SKNP V%s' % (format(x, 'X')))
         if emulator.key[emulator.V[x]] == 0:
+            emulator.pc += 4
+        else:
             emulator.pc += 2
 
     else:
         raise UnknownOpcodeError('Unknown opcode: {}'.format(opcode, '#06x'))
-
-    emulator.pc += 2
 
 
 def xFx__(opcode, emulator):
@@ -276,39 +280,42 @@ def xFx__(opcode, emulator):
 
     elif op == 0x1E:
         emulator.logger.log('ADD I, V%s' % (format(x, 'X')))
+        emulator.V[0xF] = 1 if emulator.I + emulator.V[x] > 0xFFF else 0
         emulator.I = emulator.I + emulator.V[x]
         emulator.pc += 2
 
     elif op == 0x29:
         emulator.logger.log('LD F, V%s' % (format(x, 'X')))
-        emulator.I = 0x050 + 5 * emulator.V[x]
+        emulator.I = emulator.V[x] * 0x5
         emulator.pc += 2
 
     elif op == 0x33:
         emulator.logger.log('LD B, V%s' % (format(x, 'X')))
         Vx = emulator.V[x]
-        Vx_100 = (Vx // 100) % 100
-        Vx_10 = (Vx // 10) % 10
-        Vx_1 = (Vx - 100 * Vx_100 - 10 * Vx_10)
 
-        emulator.memory[emulator.I] = Vx_100
-        emulator.memory[emulator.I + 1] = Vx_10
-        emulator.memory[emulator.I + 2] = Vx_1
+        emulator.memory[emulator.I] = Vx // 100
+        emulator.memory[emulator.I + 1] = (Vx // 10) % 10
+        emulator.memory[emulator.I + 2] = (Vx % 100) % 10
         emulator.pc += 2
 
     elif op == 0x55:
         emulator.logger.log('LD [I], V%s' % (format(x, 'X')))
-        for idx in range(16):
+        for idx in range(x + 1):
             emulator.memory[emulator.I + idx] = emulator.V[idx]
 
+        # NOTE: this skip was done in original interpreter
+        emulator.I += (x + 1)
         emulator.pc += 2
 
     elif op == 0x65:
         emulator.logger.log('LD V%s, [I]' % (format(x, 'X')))
-        for idx in range(16):
+        for idx in range(x + 1):
             emulator.V[idx] = emulator.memory[emulator.I + idx]
 
+        # NOTE: this skip was done in original interpreter
+        emulator.I += (x + 1)
         emulator.pc += 2
 
     else:
         raise UnknownOpcodeError('Unknown opcode: {}'.format(opcode, '#06x'))
+
